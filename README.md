@@ -6,7 +6,7 @@ Projeto de machine learning para classificação do diagnóstico de **Síndrome 
 
 ## Sobre o Projeto
 
-A Síndrome do Ovário Policístico (SOP) é uma condição hormonal comum que afeta mulheres em idade reprodutiva. O objetivo deste projeto é treinar e avaliar modelos de classificação capazes de prever se uma paciente tem ou não SOP com base em suas características clínicas, laboratoriais e de estilo de vida.
+A Síndrome dos Ovários Policísticos (SOP) é uma condição hormonal comum que afeta mulheres em idade reprodutiva. O objetivo deste projeto é treinar e avaliar modelos de classificação capazes de prever se uma paciente tem ou não SOP com base em suas características clínicas, laboratoriais e de estilo de vida.
 
 ---
 
@@ -49,24 +49,35 @@ tech_challenge_1/
 - Codificação de variáveis categóricas binárias com `OrdinalEncoder`
 - Codificação de variáveis categóricas não-binárias com `OneHotEncoder` (com `drop='first'`)
 - Escalonamento das variáveis numéricas com `MinMaxScaler`
-- Redução de dimensionalidade com **PCA (25 componentes)** — capturando a maior parte da variância
+- Remoção das colunas com baixa correlação com a variável-alvo por meio de um `FunctionTransformer` customizado
+- Redução de dimensionalidade com **PCA (21 componentes)** — aplicado apenas ao pipeline usado pelo KNN, já que os demais algoritmos se beneficiam de um espaço multidimensional maior
 
 ### 3. Modelos Treinados
 
-| Modelo | Detalhes |
-|---|---|
-| **KNN** | `n_neighbors=5`, com PCA aplicado |
-| **SVC** | `kernel='poly'`, `class_weight='balanced'`, sem PCA |
-| **Random Forest** | `criterion='gini'`, `class_weight='balanced_subsample'`, com PCA |
+| Modelo | Detalhes | PCA |
+|---|---|---|
+| **Regressão Logística** | `class_weight='balanced'`, `max_iter=1000`, `penalty='l2'` | Não |
+| **KNN** | `n_neighbors=5` | Sim (21 componentes) |
+| **SVC** | `kernel='poly'`, `class_weight='balanced'` | Não |
+| **Random Forest** | `n_estimators=100`, `criterion='gini'`, `max_depth=200`, `class_weight='balanced_subsample'` | Não |
 
-A escolha dos hiperparâmetros (valor de K, kernel do SVC e critério do Random Forest) foi feita por análise da taxa de erro em diferentes configurações.
+A escolha dos hiperparâmetros (penalty da Regressão Logística, valor de K do KNN, kernel do SVC e critério do Random Forest) foi feita por análise da taxa de erro em diferentes configurações.
 
 ### 4. Avaliação
-Os modelos foram avaliados com `classification_report` do scikit-learn, analisando:
+Os modelos foram avaliados com `confusion_matrix` e `classification_report` do scikit-learn, analisando:
 - Precision
 - Recall
 - F1-score
 - Acurácia geral
+
+O **Random Forest** foi o modelo com melhor desempenho geral, com o menor número de falsos negativos entre os quatro algoritmos testados — métrica especialmente importante em um problema de diagnóstico médico.
+
+### 5. Interpretabilidade (SHAP)
+Para entender quais variáveis mais influenciam as previsões dos modelos, foi aplicada a biblioteca **SHAP**:
+- `TreeExplainer` para o Random Forest
+- `KernelExplainer` para o KNN e o SVC
+
+Os resultados (summary plots) reforçam os insights obtidos na análise exploratória, destacando variáveis hormonais (LH, FSH, desequilíbrio hormonal), IMC/peso e irregularidade do ciclo menstrual como as de maior contribuição para o diagnóstico previsto.
 
 ---
 
@@ -80,6 +91,8 @@ Os modelos foram avaliados com `classification_report` do scikit-learn, analisan
 - seaborn
 - plotly
 - missingno
+- scipy
+- shap
 
 ---
 
@@ -92,7 +105,7 @@ Os modelos foram avaliados com `classification_report` do scikit-learn, analisan
 
 2. Instale as dependências:
    ```bash
-   pip install pandas numpy scikit-learn matplotlib seaborn plotly missingno openpyxl
+   pip install pandas numpy scikit-learn matplotlib seaborn plotly missingno scipy shap openpyxl
    ```
 
 3. Abra e execute o notebook:
